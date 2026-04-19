@@ -38,8 +38,9 @@ def main():
     collection_hecto = pdok_client.nwb_wegen.get_collection(collection="hectopunten")
     logger.info("Get conformance NWB wegvakken")
     collection_wegvakken = pdok_client.nwb_wegen.get_collection(collection="wegvakken")
+    logger.info("Get conformance NWB onzin")
+    collection_wegvakken = pdok_client.nwb_wegen.get_collection(collection="onzin")
     
-    pdok2 = PDOKClient(crs="EPSG:4326")
     pass
 	#check 
 
