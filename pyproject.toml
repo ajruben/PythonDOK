@@ -3,6 +3,7 @@ name = "pythonDOK"
 version = "0.0.1"
 description = "Add your description here"
 readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.12"
 dependencies = [
     "geopandas>=1.1.3",
