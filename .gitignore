@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# App dirs (main.py DATA_DIR, OUTPUT_DIR, LOG_DIR)
+/data/
+/output/
+/logs/
