@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import datetime
 from dataclasses import fields
-from typing import Any
+from typing import Any, Literal
 
 from urllib.parse import urljoin
 
@@ -32,6 +32,9 @@ __developer_note__ = (
     "This Python module only; not affiliated with PDOK/RWS; does not maintain the API or dataset."
 )
 
+# collection for this dataset
+Collection= Literal["wegvakken", "hectopunten"]
+COLLECTION_VALUES: frozenset[str] = frozenset({"wegvakken", "hectopunten"})
 
 class NWBWegen:
     NWB_METADATA = APIMetadata(
@@ -62,6 +65,8 @@ class NWBWegen:
     def metadata(self) -> APIMetadata:
         return type(self).NWB_METADATA
     
+    # COMMON endpoints - always return as dict
+    # metadata of api, by api.
     def get_landing_page(self) -> dict[str, Any]:
         """Calling root endpoint (The landing page) provides links to the API definition 
         and the conformance statements for this API.
@@ -71,27 +76,78 @@ class NWBWegen:
         """
         resp = self.pdok_session.get(
             self.nwb_endpoint,
+            params={"f": "json"},
             headers={"Accept": "application/json"},
         )
         resp.raise_for_status()
         return resp.json()
     
     def get_service_description(self) -> dict[str, Any]:
-        "The JSON OpenAPI 3.0 document that describes the API offered at this endpoint"
+        "The JSON OpenAPI 3.0 document that describes the API service offered at this endpoint"
         resp = self.pdok_session.get(
             urljoin(self.nwb_endpoint, "api"),
+            params={"f": "json"},
             headers={"Accept": "application/json"},
         )
         resp.raise_for_status()
         return resp.json()
+    
+    def get_api_conformance(self) -> dict[str, Any]:
+        """NWB - Wegen - Conformance
 
+        A list of all conformance classes specified in a standard that the server conforms to,
+        under key 'conformTo'.
+
+        Returns:
+            dict[str, Any]
+        """
+        resp = self.pdok_session.get(
+            urljoin(self.nwb_endpoint, "conformance"),
+            params={"f": "json"},
+            headers={"Accept": "application/json"},
+        )
+        resp.raise_for_status()
+        return resp.json()
+        
+    #COLLECTIONS endpoints - always dict
+    def get_collection(
+        self, collection: Collection | None = None
+    ) -> dict[str, Any]:
+        """ist collections or describe one of the dataset of NWB.
+
+        Args:
+            collection: 
+                None (default) — GET .../collections (all collections).
+                'wegvakken' or 'hectopunten' — GET .../collections/<value>.
+
+        Raises:
+            ValueError: If collection is not None and not in COLLECTION_VALUES.
+        """
+        if collection is not None and collection not in COLLECTION_VALUES:
+            raise ValueError(
+                f"collection must be None or one of {COLLECTION_VALUES}, got {collection}"
+            )
+        path = (
+            "collections" if collection is None else f"collections/{collection}"
+        )
+        resp = self.pdok_session.get(
+            urljoin(self.nwb_endpoint, path),
+            params={"f": "json"},
+            headers={"Accept": "application/json"},
+        )
+        resp.raise_for_status()
+        return resp.json()
+                
+    #FEATURES schemas - always dict
+    
+    #Features (actual geodata)
     def get_nwb_wegen_wegvakken(self) -> dict[str, Any]:
         """
         Retrieve the OGC API Features service of Nationaal Wegen Bestand (NWB) - wegen.
         Just the 'wegavkken' (roads), not hectometer paaltjes.
 
         source: https://api.pdok.nl/rws/nationaal-wegenbestand-wegen/ogc/v1/
-        doc: https://api.pdok.nl/rws/nationaal-wegenbestand-wegen/ogc/v1/api?f=json
+        doc: https://api.pdok.nl/rws/nationaal-wegenbestand-wegen/ogc/v1/api?f=html
         """
         pc = self.pdok_client
         nwb_api_wegvakken_endpoint = urljoin(

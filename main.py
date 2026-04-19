@@ -21,11 +21,27 @@ def main():
     logger = setup_logger()
     logger.info("Setup PDOK Client")
     pdok_client = PDOKClient()
+    
+    # NWB
+    #commmon
     logger.info("Get landing page NWB")
     landing_page = pdok_client.nwb_wegen.get_landing_page()
     logger.info("Get service description NWB")
     service_description = pdok_client.nwb_wegen.get_service_description()
+    logger.info("Get conformance NWB")
+    conformance = pdok_client.nwb_wegen.get_api_conformance()
+    
+    #collection
+    logger.info("Get collection NWB")
+    collection = pdok_client.nwb_wegen.get_collection()
+    logger.info("Get conformance NWB hecto")
+    collection_hecto = pdok_client.nwb_wegen.get_collection(collection="hectopunten")
+    logger.info("Get conformance NWB wegvakken")
+    collection_wegvakken = pdok_client.nwb_wegen.get_collection(collection="wegvakken")
+    
+    pdok2 = PDOKClient(crs="EPSG:4326")
     pass
+	#check 
 
 def setup_dirs() -> None:
     for dir in DIRS:
