@@ -18,8 +18,10 @@ from .metadata import APIMetadata
 
 LOGGER = logging.getLogger(__name__)
 
-# OGC bbox query: 4-6 numbers per OpenAPI (4 = 2D extent, 6 = 3D); axis order follows bbox_crs.
-BBox = Sequence[float]
+# OGC bbox query input: 4-6 numbers per OpenAPI (4 = 2D extent, 6 = 3D), or a
+# geometry-like object (Shapely, GeoSeries, GeoDataFrame) whose bounds will be
+# used. Axis order follows bbox_crs.
+BBox = Sequence[float] | BaseGeometry | gpd.GeoSeries | gpd.GeoDataFrame
 
 # Polygon-like inputs accepted in place of bbox; their bounds drive the API call,
 # their full geometry drives the post-fetch clip.
@@ -40,7 +42,7 @@ ITEMS_LIMIT_MIN = 1
 ITEMS_LIMIT_MAX = 1000
 ITEMS_LIMIT_DEFAULT = 10
 
-# --- API + dataset metadata ---
+# --- API + dataset providers metadata (not module author)---
 __title__ = "NWB - Wegen"
 __license__ = "CC0 1.0"
 __license_url__ = "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
@@ -55,7 +57,7 @@ __support_email__ = "beheerpdok@kadaster.nl"
 __support_name__ = "PDOK Support"
 __metadata_date__ = datetime.date(2026, 4, 18)
 
-# Python module author (not PDOK/RWS)
+# Python module author (not PDOK/RWS affeliated)
 __author__ = "Ruben Swarts"
 __author_email__ = "aj.rubenswarts@gmail.com"
 __author_github__ = "https://github.com/ajruben"
@@ -180,74 +182,108 @@ class NWBWegen:
     # get features
     def get_wegvakken(
         self,
-        bbox: BBox | None = None,
-        *,
-        polygon: PolygonLike | None = None,
+        # general params
+        bbox: BBox | None = None,             # only if polygon not provided
+        polygon: PolygonLike | None = None,   # only if bbox not provided (queries bbox of polygon, response is clipped to polygon)
         validate_geojson: bool = True,
         bbox_crs: Any | None = None,
         crs: Any | None = None,
         limit: int = ITEMS_LIMIT_MAX,
         f: FeaturesItemsFormat = "json",
         progress: bool = False,
-        gme_naam: str | None = None,
-        stt_naam: str | None = None,
-        wegbehsrt: str | None = None,
-        wegnummer: str | None = None,
-        wvk_id: float | int | None = None,
+        # params specific to wegvakken/roads
+        municipality_name: str | None = None,       # = gme_naam param
+        street_name: str | None = None,             # = stt_naam
+        road_manager: str | None = None,            # = wegbehsrt
+        road_number: str | None = None,             # = wegnummer
+        road_part_id: float | int | None = None,    # = wvk_id
     ) -> gpd.GeoDataFrame:
-        """Fetch wegvakken features within bbox or polygon as a single GeoDataFrame.
+        """Fetch road segments ("wegvakken") for an area, returned as a GeoDataFrame.
 
-        Provide exactly one of bbox or polygon. With polygon, the OGC bbox
-        query parameter is set to the polygon's bounds (rectangular candidate
-        set from the server), then the merged frame is geometrically clipped
-        to the polygon so the result matches the requested area exactly.
-        Uses cursor pagination internally.
+        The server returns results in pages; this method walks through every
+        page and stitches them into one GeoDataFrame for you.
+        
+        Pick one of two ways to say where you want roads from:
+          - bbox: a rectangle as four numbers (minx, miny, maxx, maxy).
+          - polygon: any format (Shapely Polygon/MultiPolygon, GeoSeries or
+            GeoDataFrame). Its bbox is queried, the repsonse is clipped to polygon.
 
         Args:
-            bbox: Sequence of 4 to 6 numbers (OpenAPI: array, minItems 4,
-                maxItems 6) in the axis order of bbox_crs. Mutually exclusive
-                with polygon.
-            polygon: Shapely Polygon/MultiPolygon, GeoSeries or GeoDataFrame.
-                Its bounds drive the API call, its full geometry clips the
-                results. If a GeoSeries/GeoDataFrame supplies a CRS, that CRS
-                is used for both bbox_crs (when not given) and the clip
-                reprojection. Plain shapely geometries have no CRS, so
-                bbox_crs must be set in that case (defaults to client crs_uri
-                when omitted, same as bbox).
-            validate_geojson: If True, validate each FeatureCollection page
-                with FeatureCollectionModel before building the frame.
-            bbox_crs: CRS for the bbox / polygon values. Accepted by pyproj
-                CRS.from_user_input and must resolve to one of PDOK's allowed
-                URIs. None uses the client's default crs_uri.
-            crs: CRS for the response geometries. Same rules as bbox_crs.
-            limit: Page size; integer in range(1, 1001).
-            f: Output media (OpenAPI f-features). One of:
+            bbox: Four (or six, for 3D) numbers defining a rectangle, in the
+                same axis order as bbox_crs. Use this OR polygon, not both.
+            polygon: Any area (Shapely geometry, GeoSeries, or GeoDataFrame).
+                If it carries a CRS, that CRS is used; otherwise the default
+                (OGC:CRS84 longitude/latitude) is assumed.
+            validate_geojson: Sanity-check each response page before parsing.
+                Safe to leave on; automatically skipped for projected CRS.
+            bbox_crs: CRS of the bbox/polygon coordinates. Defaults to the
+                client default (OGC:CRS84). Must be one of PDOK's accepted
+                CRSs: OGC:CRS84, EPSG:28992 (RD New), EPSG:3857, EPSG:4258.
+            crs: CRS of the geometries returned in the GeoDataFrame.
+                Same options as bbox_crs. EPSG:28992 is a good pick for
+                measurements in meters across the Netherlands.
+            limit: How many roads to request per page (1..1000). Bigger =
+                fewer HTTP calls. Default 1000.
+            f: Response format from the server.
+                - "json": plain GeoJSON (default, recommended).
+                - "jsonfg": OGC Features JSON-FG (extra metadata).
+                - "html": HTML page (not usable here).
+            progress: Show a tqdm progress bar across pages.
 
-                - "json": plain GeoJSON FeatureCollection.
-                - "jsonfg": OGC Features JSON-FG.
-                - "html": HTML page; not usable with this GeoDataFrame path.
+            Road attribute filters (all optional, applied server-side):
 
-            progress: If True, show a tqdm bar over pages.
-            gme_naam: Server-side filter on the gme_naam property
-                (gemeentenaam).
-            stt_naam: Server-side filter on the stt_naam property
-                (straatnaam).
-            wegbehsrt: Server-side filter on the wegbehsrt property
-                (wegbeheerder soort).
-            wegnummer: Server-side filter on the wegnummer property.
-            wvk_id: Server-side filter on the wvk_id property (wegvak id).
+            municipality_name: Municipality (gemeente). Example: "Goeree-Overflakkee".
+            street_name: Street (straatnaam). Example: "Stoofweg".
+            road_manager: Road manager type (wegbeheerder soort). One of:
+
+                - "G" : gemeente (municipality)
+                - "P" : provincie
+                - "R" : rijk (national)
+                - "W" : waterschap
+                - "T" : other (e.g. Staatsbosbeheer)
+
+            road_number: Road number. Example: "057" (matches N57 / RW57).
+            road_part_id: Exact road-segment id. Example: 600944149.
 
         Returns:
-            geopandas.GeoDataFrame: Merged features for all pages with the
-            geometry column set to the resolved out_crs. When polygon is
-            given, geometries are clipped to that polygon.
+            geopandas.GeoDataFrame: All matching road segments, already
+            merged across pages. When you pass a polygon, geometries are
+            clipped to it so the result matches your area exactly.
 
         Raises:
             ValueError: If neither or both of bbox and polygon are given, or
-                if limit is not an int in [ITEMS_LIMIT_MIN, ITEMS_LIMIT_MAX].
-            TypeError: If polygon is not Shapely geometry, GeoSeries or
+                if limit is outside 1..1000.
+            TypeError: If polygon is not a Shapely geometry, GeoSeries, or
                 GeoDataFrame.
             requests.HTTPError: For non-2xx HTTP responses from the API.
+
+        Examples:
+            Fetch by bounding box:
+
+            >>> gdf = nwb.get_wegvakken(bbox=(3.82, 51.62, 4.41, 51.86))
+
+            Fetch for a polygon and clip to it, loaded from a GeoJSON file (but format is arbitrary):
+
+            >>> aoi = gpd.read_file("aoi.geojson").set_crs("OGC:CRS84", allow_override=True)
+            >>> gdf = nwb.get_wegvakken(polygon=aoi, progress=True)
+
+            Same thing, but building the polygon directly with Shapely
+            (lon/lat coordinates, so tag it as OGC:CRS84 via a GeoSeries):
+
+            >>> from shapely.geometry import Polygon
+            >>> poly = Polygon([
+            ...     (3.82, 51.62), (4.00, 51.60), (4.25, 51.63), (4.41, 51.70),
+            ...     (4.41, 51.80), (4.30, 51.86), (4.05, 51.86), (3.85, 51.82),
+            ...     (3.82, 51.72), (3.82, 51.62),
+            ... ])
+            >>> aoi = gpd.GeoSeries([poly], crs="OGC:CRS84") # area of interest
+            >>> gdf = nwb.get_wegvakken(polygon=aoi)
+
+            Only roads managed by a provincie (province), on road N57:
+
+            >>> gdf = nwb.get_wegvakken(
+            ...     polygon=aoi, road_manager="P", road_number="057",
+            ... )
         """
         if (bbox is None) == (polygon is None):
             raise ValueError("Provide exactly one of bbox or polygon")
@@ -256,48 +292,40 @@ class NWBWegen:
                 f"limit must be int in [{ITEMS_LIMIT_MIN}, {ITEMS_LIMIT_MAX}], got {limit!r}"
             )
 
-        pc = self.pdok_client
+        # Single CRS for both the query and the clip: align to the response CRS.
+        out_crs_uri = self.pdok_client.resolve_query_crs(crs)
         clip_geom: BaseGeometry | None = None
-        clip_crs: CRS | None = None
+
         if polygon is not None:
-            raw_geom, raw_crs = pc.resolve_polygon(polygon)
-            if raw_geom.is_empty:
-                raise ValueError("polygon is empty")
-            # bbox_crs precedence: explicit kwarg > polygon's own crs > client default.
-            if bbox_crs is None and raw_crs is not None:
-                bbox_crs = raw_crs
-            request_crs = CRS(pc.resolve_query_crs(bbox_crs))
-            if raw_crs is not None:
-                src_crs = CRS.from_user_input(raw_crs)
-                if not src_crs.equals(request_crs):
-                    raw_geom = (
-                        gpd.GeoSeries([raw_geom], crs=src_crs)
-                        .to_crs(request_crs)
-                        .iloc[0]
-                    )
-            clip_geom = raw_geom
-            clip_crs = request_crs
-            bbox = clip_geom.bounds  # in request_crs, matches bbox-crs query param
+            if bbox_crs is not None:
+                LOGGER.debug(
+                    "polygon given; ignoring bbox_crs=%r (using response crs %r).",
+                    bbox_crs, out_crs_uri,
+                )
+            clip_geom, out_crs_uri = self.pdok_client.prepare_polygon(
+                polygon, target_crs=crs,
+            )
+            bbox = clip_geom.bounds  # already in out_crs_uri
 
         merged: dict[str, Any] = {
             "f": f,
-            "bbox": pc.bbox_to_query_param(bbox),
-            "bbox-crs": pc.resolve_query_crs(bbox_crs),
-            "crs": pc.resolve_query_crs(crs),
+            "bbox": self.pdok_client.bbox_to_query_param(bbox),
+            "bbox-crs": out_crs_uri if polygon is not None else self.pdok_client.resolve_query_crs(bbox_crs),
+            "crs": out_crs_uri,
             "limit": limit,
         }
-        if gme_naam is not None:
-            merged["gme_naam"] = gme_naam
-        if stt_naam is not None:
-            merged["stt_naam"] = stt_naam
-        if wegbehsrt is not None:
-            merged["wegbehsrt"] = wegbehsrt
-        if wegnummer is not None:
-            merged["wegnummer"] = wegnummer
-        if wvk_id is not None:
-            merged["wvk_id"] = wvk_id
+        if municipality_name is not None:
+            merged["gme_naam"] = municipality_name
+        if street_name is not None:
+            merged["stt_naam"] = street_name
+        if road_manager is not None:
+            merged["wegbehsrt"] = road_manager
+        if road_number is not None:
+            merged["wegnummer"] = road_number
+        if road_part_id is not None:
+            merged["wvk_id"] = road_part_id
 
-        out_crs = CRS(pc.resolve_query_crs(crs))
+        out_crs = CRS(out_crs_uri)
         LOGGER.info(
             "wegvakken: start paginated fetch bbox=%s limit=%s f=%s",
             merged["bbox"], limit, f,
@@ -317,15 +345,15 @@ class NWBWegen:
             while True:
                 page_num += 1
                 if next_url is None:
-                    fc = pc.ogc_collection_items(
+                    fc = self.pdok_client.ogc_collection_items(
                         self.nwb_endpoint,
                         "wegvakken",
                         params=merged,
                         extra_headers={"Accept": accept},
                     )
                 else:
-                    fc = pc.fetch_json(next_url, accept=accept)
-                chunk = pc.feature_collection_to_geodataframe(
+                    fc = self.pdok_client.fetch_json(next_url, accept=accept)
+                chunk = self.pdok_client.feature_collection_to_geodataframe(
                     fc, crs=out_crs, validate=validate_geojson,
                 )
                 chunks.append(chunk)
@@ -336,7 +364,7 @@ class NWBWegen:
                 )
                 pbar.update(1)
                 pbar.set_postfix_str(f"{cum} feats")
-                next_url = pc.ogc_items_next_href(fc)
+                next_url = self.pdok_client.ogc_items_next_href(fc)
                 if next_url is None:
                     break
         finally:
@@ -348,11 +376,8 @@ class NWBWegen:
             gdf = gpd.GeoDataFrame(gpd.pd.concat(chunks, ignore_index=True))
 
         if clip_geom is not None:
-            mask = gpd.GeoSeries([clip_geom], crs=clip_crs)
-            if not mask.crs.equals(out_crs):
-                mask = mask.to_crs(out_crs)
             n_before = len(gdf)
-            gdf = gpd.clip(gdf, mask)
+            gdf = gpd.clip(gdf, gpd.GeoSeries([clip_geom], crs=out_crs))
             LOGGER.info(
                 "wegvakken: clipped to polygon, %d -> %d features",
                 n_before, len(gdf),

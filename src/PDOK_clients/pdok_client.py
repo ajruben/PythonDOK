@@ -117,28 +117,56 @@ class PDOKClient:
         self.nwb_wegen = NWBWegen(pdok_client=self)
 
     @staticmethod
-    def bbox_to_query_param(bbox: Sequence[float]) -> str:
+    def bbox_to_query_param(
+        bbox: Sequence[float] | BaseGeometry | gpd.GeoSeries | gpd.GeoDataFrame,
+    ) -> str:
         """Format an OGC bbox query value as comma-separated numbers.
 
         Matches the OpenAPI fragment: type=array, items=number, minItems=4,
         maxItems=6.
 
+        Accepts either a sequence of 4-6 numbers directly, or a geometry-like
+        object from which bounds will be extracted:
+            - Shapely geometry: uses ``geom.bounds`` (4 numbers).
+            - GeoPandas GeoSeries or GeoDataFrame: uses ``.total_bounds``
+              (4 numbers). The caller is responsible for aligning the CRS
+              with whatever bbox-crs query parameter they send.
+
         Args:
-            bbox: Sequence of 4 to 6 numbers.
+            bbox: Sequence of 4-6 numbers, Shapely geometry, GeoSeries, or
+                GeoDataFrame.
 
         Returns:
             str: Comma-separated stringified floats.
 
         Raises:
-            ValueError: If len(bbox) is not in [4, 6].
+            ValueError: If a sequence length is not in [4, 6] or the input
+                is an empty geometry / frame.
+            TypeError: If the input is none of the accepted types.
         """
-        n = len(bbox)
+        if isinstance(bbox, BaseGeometry):
+            if bbox.is_empty:
+                raise ValueError("bbox geometry is empty")
+            values: Sequence[float] = bbox.bounds
+        elif isinstance(bbox, (gpd.GeoSeries, gpd.GeoDataFrame)):
+            if bbox.empty or bbox.geometry.is_empty.all():
+                raise ValueError("bbox geometry collection is empty")
+            values = tuple(bbox.total_bounds)
+        elif isinstance(bbox, Sequence) and not isinstance(bbox, (str, bytes)):
+            values = bbox
+        else:
+            raise TypeError(
+                "bbox must be a sequence of 4-6 numbers, a Shapely geometry, "
+                f"a GeoSeries, or a GeoDataFrame; got {type(bbox).__name__}"
+            )
+
+        n = len(values)
         if not _BBOX_MIN_ITEMS <= n <= _BBOX_MAX_ITEMS:
             raise ValueError(
                 f"bbox length must be between {_BBOX_MIN_ITEMS} and {_BBOX_MAX_ITEMS} "
                 "(OpenAPI: type array, items number, minItems 4, maxItems 6)."
             )
-        return ",".join(str(float(x)) for x in bbox)
+        return ",".join(str(float(x)) for x in values)
 
     # OGC API Common helpers (for dataset modules; all use pdok_session)
     def build_url(
@@ -461,16 +489,22 @@ class PDOKClient:
         """
         return list(schema.get("properties", {}).keys())
 
-    @staticmethod
-    def resolve_polygon(polygon: Any) -> tuple[BaseGeometry, Any | None]:
-        """Extract a single Shapely geometry plus optional CRS from a polygon-like input.
+    _POLYGONAL_GEOM_TYPES = frozenset({"Polygon", "MultiPolygon"})
+
+    @classmethod
+    def resolve_polygon(cls, polygon: Any) -> tuple[BaseGeometry, Any | None]:
+        """Extract a single polygonal Shapely geometry plus optional CRS.
 
         Useful for callers that want to drive an OGC items request from a
         polygon: take its bounds for the bbox query parameter and reuse the
         full geometry to clip the response.
 
+        Only Polygon / MultiPolygon geometries are accepted (any coordinate
+        dimension). Points, LineStrings, and GeometryCollections are rejected.
+
         Args:
-            polygon: Shapely geometry, GeoSeries, or GeoDataFrame.
+            polygon: Shapely Polygon/MultiPolygon, or a GeoSeries / GeoDataFrame
+                whose geometries union into a (Multi)Polygon.
 
         Returns:
             tuple: (geometry, crs). geometry is the union of all geometries
@@ -479,18 +513,93 @@ class PDOKClient:
             geometry).
 
         Raises:
-            TypeError: If polygon is not a supported type.
+            TypeError: If polygon is not one of the supported container types
+                or its geometry is not polygonal.
         """
         if isinstance(polygon, gpd.GeoDataFrame):
-            return polygon.geometry.union_all(), polygon.crs
-        if isinstance(polygon, gpd.GeoSeries):
-            return polygon.union_all(), polygon.crs
-        if isinstance(polygon, BaseGeometry):
-            return polygon, None
-        raise TypeError(
-            "polygon must be a Shapely geometry, GeoSeries or GeoDataFrame; "
-            f"got {type(polygon).__name__}"
-        )
+            geom, crs = polygon.geometry.union_all(), polygon.crs
+        elif isinstance(polygon, gpd.GeoSeries):
+            geom, crs = polygon.union_all(), polygon.crs
+        elif isinstance(polygon, BaseGeometry):
+            geom, crs = polygon, None
+        else:
+            raise TypeError(
+                "polygon must be a Shapely Polygon/MultiPolygon, GeoSeries or "
+                f"GeoDataFrame; got {type(polygon).__name__}"
+            )
+        if geom.is_empty:
+            raise ValueError("polygon is empty")
+        if geom.geom_type not in cls._POLYGONAL_GEOM_TYPES:
+            raise TypeError(
+                "polygon must be a Polygon or MultiPolygon geometry; "
+                f"got {geom.geom_type}"
+            )
+        return geom, crs
+
+    def prepare_polygon(
+        self,
+        polygon: Any,
+        target_crs: Any | None = None,
+    ) -> tuple[BaseGeometry, str]:
+        """Return a polygon reprojected to one of PDOK's allowed query CRSs.
+
+        Handles CRS resolution for polygon-driven OGC items requests: the
+        returned geometry is suitable both for extracting bounds to send as
+        the bbox query parameter and for clipping the response GeoDataFrame
+        (same CRS for both).
+
+        Precedence for the target CRS:
+            1. target_crs (explicit kwarg), else
+            2. the polygon's own CRS (GeoSeries / GeoDataFrame), else
+            3. the client default (self.crs_uri).
+
+        If the polygon's CRS is inherited but not PDOK-allowed, a warning is
+        logged and the client default is used instead; the polygon is then
+        reprojected to that CRS.
+
+        Args:
+            polygon: Shapely geometry, GeoSeries, or GeoDataFrame.
+            target_crs: Desired CRS. Anything pyproj.CRS.from_user_input
+                accepts; must resolve to one of PDOK's allowed URIs.
+
+        Returns:
+            tuple: (geometry, crs_uri). geometry is in crs_uri. crs_uri is one
+            of PDOK's accepted query CRS strings.
+
+        Raises:
+            ValueError: If polygon is empty, or target_crs is explicitly given
+                but not in the PDOK allow-list.
+            TypeError: If polygon is not a supported input type.
+        """
+        geom, raw_crs = self.resolve_polygon(polygon)
+
+        inherited = target_crs is None and raw_crs is not None
+        if inherited:
+            target_crs = raw_crs
+
+        try:
+            target_uri = self.resolve_query_crs(target_crs)
+        except ValueError:
+            if not inherited:
+                raise
+            LOGGER.warning(
+                "polygon CRS %r is not accepted by PDOK; falling back to "
+                "client default %r (polygon will be reprojected). Pass an "
+                "explicit target_crs to override.",
+                raw_crs, self.crs_uri,
+            )
+            target_uri = self.crs_uri
+
+        target_pyproj = CRS(target_uri)
+        if raw_crs is not None:
+            src_crs = CRS.from_user_input(raw_crs)
+            if not src_crs.equals(target_pyproj):
+                geom = (
+                    gpd.GeoSeries([geom], crs=src_crs)
+                    .to_crs(target_pyproj)
+                    .iloc[0]
+                )
+        return geom, target_uri
 
     @staticmethod
     def feature_collection_to_geodataframe(

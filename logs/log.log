@@ -1,45 +1,124 @@
-[INFO]  [04-19-2026 10:08:24] : Setup PDOK Client
-[INFO]  [04-19-2026 10:08:24] : Get landing page NWB
-[INFO]  [04-19-2026 10:08:24] : Get service description NWB
-[INFO]  [04-19-2026 10:08:24] : Get conformance NWB
-[INFO]  [04-19-2026 10:08:24] : Get collection NWB
-[INFO]  [04-19-2026 10:08:24] : Get collection NWB hectopunten
-[INFO]  [04-19-2026 10:08:24] : Get collection NWB wegvakken
-[INFO]  [04-19-2026 10:08:24] : Get hectopunten schema
-[DEBUG]  [04-19-2026 10:08:24] : hectopunten schema title: 'Hectopunten'
-[INFO]  [04-19-2026 10:08:24] : Get wegvakken schema (JSON Schema for features)
-[INFO]  [04-19-2026 10:08:24] : wegvakken schema: 60 property keys (e.g. id, admrichtng, alt_naam, alt_nr, bag_orl, begafstand, beginkm, bronjaar …)
-[INFO]  [04-19-2026 10:08:24] : Load AOI polygon: /Users/rubenswarts/projects/postcode_search/data/aoi.geojson
-[INFO]  [04-19-2026 10:08:24] : AOI: 1 feature(s), crs=OGC:CRS84
-[INFO]  [04-19-2026 10:08:24] : Fetch wegvakken clipped to AOI -> GeoDataFrame
-[INFO]  [04-19-2026 10:08:24] : wegvakken: start paginated fetch bbox=3.824527254400806,51.64709823448308,4.381238033350343,51.86682170229136 limit=1000 f=json
-[INFO]  [04-19-2026 10:08:25] : wegvakken: page 1 +1000 features (1000 cumulative)
-[INFO]  [04-19-2026 10:08:25] : wegvakken: page 2 +1000 features (2000 cumulative)
-[INFO]  [04-19-2026 10:08:26] : wegvakken: page 3 +1000 features (3000 cumulative)
-[INFO]  [04-19-2026 10:08:26] : wegvakken: page 4 +1000 features (4000 cumulative)
-[INFO]  [04-19-2026 10:08:26] : wegvakken: page 5 +1000 features (5000 cumulative)
-[INFO]  [04-19-2026 10:08:27] : wegvakken: page 6 +1000 features (6000 cumulative)
-[INFO]  [04-19-2026 10:08:27] : wegvakken: page 7 +1000 features (7000 cumulative)
-[INFO]  [04-19-2026 10:08:27] : wegvakken: page 8 +1000 features (8000 cumulative)
-[INFO]  [04-19-2026 10:08:28] : wegvakken: page 9 +1000 features (9000 cumulative)
-[INFO]  [04-19-2026 10:08:28] : wegvakken: page 10 +1000 features (10000 cumulative)
-[INFO]  [04-19-2026 10:08:28] : wegvakken: page 11 +1000 features (11000 cumulative)
-[INFO]  [04-19-2026 10:08:29] : wegvakken: page 12 +1000 features (12000 cumulative)
-[INFO]  [04-19-2026 10:08:29] : wegvakken: page 13 +1000 features (13000 cumulative)
-[INFO]  [04-19-2026 10:08:29] : wegvakken: page 14 +1000 features (14000 cumulative)
-[INFO]  [04-19-2026 10:08:30] : wegvakken: page 15 +1000 features (15000 cumulative)
-[INFO]  [04-19-2026 10:08:30] : wegvakken: page 16 +1000 features (16000 cumulative)
-[INFO]  [04-19-2026 10:08:30] : wegvakken: page 17 +1000 features (17000 cumulative)
-[INFO]  [04-19-2026 10:08:31] : wegvakken: page 18 +1000 features (18000 cumulative)
-[INFO]  [04-19-2026 10:08:31] : wegvakken: page 19 +1000 features (19000 cumulative)
-[INFO]  [04-19-2026 10:08:31] : wegvakken: page 20 +1000 features (20000 cumulative)
-[INFO]  [04-19-2026 10:08:32] : wegvakken: page 21 +1000 features (21000 cumulative)
-[INFO]  [04-19-2026 10:08:32] : wegvakken: page 22 +1000 features (22000 cumulative)
-[INFO]  [04-19-2026 10:08:32] : wegvakken: page 23 +1000 features (23000 cumulative)
-[INFO]  [04-19-2026 10:08:33] : wegvakken: page 24 +1000 features (24000 cumulative)
-[INFO]  [04-19-2026 10:08:33] : wegvakken: page 25 +938 features (24938 cumulative)
-[INFO]  [04-19-2026 10:08:33] : wegvakken: clipped to polygon, 24938 -> 6393 features
-[INFO]  [04-19-2026 10:08:33] : wegvakken: done 25 pages, 6393 features total
-[INFO]  [04-19-2026 10:08:33] : GeoDataFrame: rows=6393 crs=http://www.opengis.net/def/crs/OGC/1.3/CRS84 columns=['geometry', 'admrichtng', 'alt_naam', 'alt_nr', 'bag_orl', 'begafstand']
-[INFO]  [04-19-2026 10:08:33] : Save GeoPackage (EPSG:28992) -> /Users/rubenswarts/projects/postcode_search/output/wegvakken.gpkg
-[INFO]  [04-19-2026 10:08:33] : Save plot -> /Users/rubenswarts/projects/postcode_search/output/wegvakken.png
+[INFO]  [04-20-2026 01:34:17] : Setup PDOK Client
+[INFO]  [04-20-2026 01:34:17] : Get landing page NWB
+[INFO]  [04-20-2026 01:34:17] : Get conformance NWB
+[INFO]  [04-20-2026 01:34:20] : Get collection NWB wegvakken
+[INFO]  [04-20-2026 01:34:20] : Get wegvakken schema (JSON Schema for features)
+[INFO]  [04-20-2026 01:34:21] : wegvakken schema: 60 property keys (e.g. id, admrichtng, alt_naam, alt_nr, bag_orl, begafstand, beginkm, bronjaar ...)
+[INFO]  [04-20-2026 01:34:21] : Load AOI polygon: /Users/rubenswarts/projects/postcode_search/data/aoi.geojson
+[INFO]  [04-20-2026 01:34:21] : AOI: 1 feature(s), crs=OGC:CRS84
+[INFO]  [04-20-2026 01:34:21] : ======================================================================
+[INFO]  [04-20-2026 01:34:21] : Example 'bbox': Wegvakken from a plain bounding box
+[INFO]  [04-20-2026 01:34:21] : get_wegvakken kwargs: {'bbox': 'tuple'}
+[INFO]  [04-20-2026 01:34:21] : wegvakken: start paginated fetch bbox=3.82,51.62,4.41,51.86 limit=1000 f=json
+[INFO]  [04-20-2026 01:34:21] : wegvakken: page 1 +1000 features (1000 cumulative)
+[INFO]  [04-20-2026 01:34:22] : wegvakken: page 2 +1000 features (2000 cumulative)
+[INFO]  [04-20-2026 01:34:22] : wegvakken: page 3 +1000 features (3000 cumulative)
+[INFO]  [04-20-2026 01:34:23] : wegvakken: page 4 +1000 features (4000 cumulative)
+[INFO]  [04-20-2026 01:34:23] : wegvakken: page 5 +1000 features (5000 cumulative)
+[INFO]  [04-20-2026 01:34:24] : wegvakken: page 6 +1000 features (6000 cumulative)
+[INFO]  [04-20-2026 01:34:24] : wegvakken: page 7 +1000 features (7000 cumulative)
+[INFO]  [04-20-2026 01:34:25] : wegvakken: page 8 +1000 features (8000 cumulative)
+[INFO]  [04-20-2026 01:34:25] : wegvakken: page 9 +1000 features (9000 cumulative)
+[INFO]  [04-20-2026 01:34:26] : wegvakken: page 10 +1000 features (10000 cumulative)
+[INFO]  [04-20-2026 01:34:26] : wegvakken: page 11 +1000 features (11000 cumulative)
+[INFO]  [04-20-2026 01:34:27] : wegvakken: page 12 +1000 features (12000 cumulative)
+[INFO]  [04-20-2026 01:34:28] : wegvakken: page 13 +1000 features (13000 cumulative)
+[INFO]  [04-20-2026 01:34:29] : wegvakken: page 14 +1000 features (14000 cumulative)
+[INFO]  [04-20-2026 01:34:29] : wegvakken: page 15 +1000 features (15000 cumulative)
+[INFO]  [04-20-2026 01:34:30] : wegvakken: page 16 +1000 features (16000 cumulative)
+[INFO]  [04-20-2026 01:34:30] : wegvakken: page 17 +1000 features (17000 cumulative)
+[INFO]  [04-20-2026 01:34:31] : wegvakken: page 18 +1000 features (18000 cumulative)
+[INFO]  [04-20-2026 01:34:31] : wegvakken: page 19 +1000 features (19000 cumulative)
+[INFO]  [04-20-2026 01:34:32] : wegvakken: page 20 +1000 features (20000 cumulative)
+[INFO]  [04-20-2026 01:34:32] : wegvakken: page 21 +1000 features (21000 cumulative)
+[INFO]  [04-20-2026 01:34:32] : wegvakken: page 22 +1000 features (22000 cumulative)
+[INFO]  [04-20-2026 01:34:33] : wegvakken: page 23 +1000 features (23000 cumulative)
+[INFO]  [04-20-2026 01:34:33] : wegvakken: page 24 +1000 features (24000 cumulative)
+[INFO]  [04-20-2026 01:34:33] : wegvakken: page 25 +1000 features (25000 cumulative)
+[INFO]  [04-20-2026 01:34:34] : wegvakken: page 26 +1000 features (26000 cumulative)
+[INFO]  [04-20-2026 01:34:34] : wegvakken: page 27 +537 features (26537 cumulative)
+[INFO]  [04-20-2026 01:34:34] : wegvakken: done 27 pages, 26537 features total
+[INFO]  [04-20-2026 01:34:34] :   -> rows=26537 crs=http://www.opengis.net/def/crs/OGC/1.3/CRS84 columns=['geometry', 'admrichtng', 'alt_naam', 'alt_nr', 'bag_orl', 'begafstand']
+[INFO]  [04-20-2026 01:34:34] :   saving GeoPackage (EPSG:28992) -> /Users/rubenswarts/projects/postcode_search/output/bbox.gpkg
+[INFO]  [04-20-2026 01:34:35] :   saving plot -> /Users/rubenswarts/projects/postcode_search/output/bbox.png
+[INFO]  [04-20-2026 01:34:35] : ======================================================================
+[INFO]  [04-20-2026 01:34:35] : Example 'aoi_geojson': Wegvakken clipped to AOI loaded from GeoJSON
+[INFO]  [04-20-2026 01:34:35] : get_wegvakken kwargs: {'polygon': 'GeoDataFrame'}
+[INFO]  [04-20-2026 01:34:35] : wegvakken: start paginated fetch bbox=3.824527254400806,51.64709823448308,4.381238033350343,51.86682170229136 limit=1000 f=json
+[INFO]  [04-20-2026 01:34:36] : wegvakken: page 1 +1000 features (1000 cumulative)
+[INFO]  [04-20-2026 01:34:36] : wegvakken: page 2 +1000 features (2000 cumulative)
+[INFO]  [04-20-2026 01:34:36] : wegvakken: page 3 +1000 features (3000 cumulative)
+[INFO]  [04-20-2026 01:34:37] : wegvakken: page 4 +1000 features (4000 cumulative)
+[INFO]  [04-20-2026 01:34:37] : wegvakken: page 5 +1000 features (5000 cumulative)
+[INFO]  [04-20-2026 01:34:38] : wegvakken: page 6 +1000 features (6000 cumulative)
+[INFO]  [04-20-2026 01:34:38] : wegvakken: page 7 +1000 features (7000 cumulative)
+[INFO]  [04-20-2026 01:34:38] : wegvakken: page 8 +1000 features (8000 cumulative)
+[INFO]  [04-20-2026 01:34:39] : wegvakken: page 9 +1000 features (9000 cumulative)
+[INFO]  [04-20-2026 01:34:39] : wegvakken: page 10 +1000 features (10000 cumulative)
+[INFO]  [04-20-2026 01:34:39] : wegvakken: page 11 +1000 features (11000 cumulative)
+[INFO]  [04-20-2026 01:34:40] : wegvakken: page 12 +1000 features (12000 cumulative)
+[INFO]  [04-20-2026 01:34:40] : wegvakken: page 13 +1000 features (13000 cumulative)
+[INFO]  [04-20-2026 01:34:41] : wegvakken: page 14 +1000 features (14000 cumulative)
+[INFO]  [04-20-2026 01:34:41] : wegvakken: page 15 +1000 features (15000 cumulative)
+[INFO]  [04-20-2026 01:34:41] : wegvakken: page 16 +1000 features (16000 cumulative)
+[INFO]  [04-20-2026 01:34:42] : wegvakken: page 17 +1000 features (17000 cumulative)
+[INFO]  [04-20-2026 01:34:42] : wegvakken: page 18 +1000 features (18000 cumulative)
+[INFO]  [04-20-2026 01:34:42] : wegvakken: page 19 +1000 features (19000 cumulative)
+[INFO]  [04-20-2026 01:34:43] : wegvakken: page 20 +1000 features (20000 cumulative)
+[INFO]  [04-20-2026 01:34:43] : wegvakken: page 21 +1000 features (21000 cumulative)
+[INFO]  [04-20-2026 01:34:43] : wegvakken: page 22 +1000 features (22000 cumulative)
+[INFO]  [04-20-2026 01:34:44] : wegvakken: page 23 +1000 features (23000 cumulative)
+[INFO]  [04-20-2026 01:34:44] : wegvakken: page 24 +1000 features (24000 cumulative)
+[INFO]  [04-20-2026 01:34:44] : wegvakken: page 25 +938 features (24938 cumulative)
+[INFO]  [04-20-2026 01:34:45] : wegvakken: clipped to polygon, 24938 -> 6393 features
+[INFO]  [04-20-2026 01:34:45] : wegvakken: done 25 pages, 6393 features total
+[INFO]  [04-20-2026 01:34:45] :   -> rows=6393 crs=http://www.opengis.net/def/crs/OGC/1.3/CRS84 columns=['geometry', 'admrichtng', 'alt_naam', 'alt_nr', 'bag_orl', 'begafstand']
+[INFO]  [04-20-2026 01:34:45] :   saving GeoPackage (EPSG:28992) -> /Users/rubenswarts/projects/postcode_search/output/aoi_geojson.gpkg
+[INFO]  [04-20-2026 01:34:45] :   saving plot -> /Users/rubenswarts/projects/postcode_search/output/aoi_geojson.png
+[INFO]  [04-20-2026 01:34:45] : ======================================================================
+[INFO]  [04-20-2026 01:34:45] : Example 'aoi_inline_shapely': Wegvakken clipped to a hand-built Shapely polygon
+[INFO]  [04-20-2026 01:34:45] : get_wegvakken kwargs: {'polygon': 'GeoSeries'}
+[INFO]  [04-20-2026 01:34:45] : wegvakken: start paginated fetch bbox=3.82,51.6,4.41,51.86 limit=1000 f=json
+[INFO]  [04-20-2026 01:34:45] : wegvakken: page 1 +1000 features (1000 cumulative)
+[INFO]  [04-20-2026 01:34:46] : wegvakken: page 2 +1000 features (2000 cumulative)
+[INFO]  [04-20-2026 01:34:46] : wegvakken: page 3 +1000 features (3000 cumulative)
+[INFO]  [04-20-2026 01:34:46] : wegvakken: page 4 +1000 features (4000 cumulative)
+[INFO]  [04-20-2026 01:34:47] : wegvakken: page 5 +1000 features (5000 cumulative)
+[INFO]  [04-20-2026 01:34:47] : wegvakken: page 6 +1000 features (6000 cumulative)
+[INFO]  [04-20-2026 01:34:47] : wegvakken: page 7 +1000 features (7000 cumulative)
+[INFO]  [04-20-2026 01:34:48] : wegvakken: page 8 +1000 features (8000 cumulative)
+[INFO]  [04-20-2026 01:34:48] : wegvakken: page 9 +1000 features (9000 cumulative)
+[INFO]  [04-20-2026 01:34:49] : wegvakken: page 10 +1000 features (10000 cumulative)
+[INFO]  [04-20-2026 01:34:49] : wegvakken: page 11 +1000 features (11000 cumulative)
+[INFO]  [04-20-2026 01:34:49] : wegvakken: page 12 +1000 features (12000 cumulative)
+[INFO]  [04-20-2026 01:34:50] : wegvakken: page 13 +1000 features (13000 cumulative)
+[INFO]  [04-20-2026 01:34:50] : wegvakken: page 14 +1000 features (14000 cumulative)
+[INFO]  [04-20-2026 01:34:50] : wegvakken: page 15 +1000 features (15000 cumulative)
+[INFO]  [04-20-2026 01:34:51] : wegvakken: page 16 +1000 features (16000 cumulative)
+[INFO]  [04-20-2026 01:34:51] : wegvakken: page 17 +1000 features (17000 cumulative)
+[INFO]  [04-20-2026 01:34:52] : wegvakken: page 18 +1000 features (18000 cumulative)
+[INFO]  [04-20-2026 01:34:52] : wegvakken: page 19 +1000 features (19000 cumulative)
+[INFO]  [04-20-2026 01:34:52] : wegvakken: page 20 +1000 features (20000 cumulative)
+[INFO]  [04-20-2026 01:34:53] : wegvakken: page 21 +1000 features (21000 cumulative)
+[INFO]  [04-20-2026 01:34:53] : wegvakken: page 22 +1000 features (22000 cumulative)
+[INFO]  [04-20-2026 01:34:54] : wegvakken: page 23 +1000 features (23000 cumulative)
+[INFO]  [04-20-2026 01:34:54] : wegvakken: page 24 +1000 features (24000 cumulative)
+[INFO]  [04-20-2026 01:34:54] : wegvakken: page 25 +1000 features (25000 cumulative)
+[INFO]  [04-20-2026 01:34:55] : wegvakken: page 26 +1000 features (26000 cumulative)
+[INFO]  [04-20-2026 01:34:55] : wegvakken: page 27 +1000 features (27000 cumulative)
+[INFO]  [04-20-2026 01:34:55] : wegvakken: page 28 +270 features (27270 cumulative)
+[INFO]  [04-20-2026 01:34:55] : wegvakken: clipped to polygon, 27270 -> 20254 features
+[INFO]  [04-20-2026 01:34:55] : wegvakken: done 28 pages, 20254 features total
+[INFO]  [04-20-2026 01:34:55] :   -> rows=20254 crs=http://www.opengis.net/def/crs/OGC/1.3/CRS84 columns=['geometry', 'admrichtng', 'alt_naam', 'alt_nr', 'bag_orl', 'begafstand']
+[INFO]  [04-20-2026 01:34:55] :   saving GeoPackage (EPSG:28992) -> /Users/rubenswarts/projects/postcode_search/output/aoi_inline_shapely.gpkg
+[INFO]  [04-20-2026 01:34:56] :   saving plot -> /Users/rubenswarts/projects/postcode_search/output/aoi_inline_shapely.png
+[INFO]  [04-20-2026 01:34:56] : ======================================================================
+[INFO]  [04-20-2026 01:34:56] : Example 'aoi_provincie_only': Provincie-managed roads (wegbehsrt="P") in the AOI
+[INFO]  [04-20-2026 01:34:56] : get_wegvakken kwargs: {'polygon': 'GeoDataFrame', 'road_manager': 'str'}
+[INFO]  [04-20-2026 01:34:56] : wegvakken: start paginated fetch bbox=3.824527254400806,51.64709823448308,4.381238033350343,51.86682170229136 limit=1000 f=json
+[INFO]  [04-20-2026 01:34:59] : wegvakken: page 1 +733 features (733 cumulative)
+[INFO]  [04-20-2026 01:34:59] : wegvakken: clipped to polygon, 733 -> 342 features
+[INFO]  [04-20-2026 01:34:59] : wegvakken: done 1 pages, 342 features total
+[INFO]  [04-20-2026 01:34:59] :   -> rows=342 crs=http://www.opengis.net/def/crs/OGC/1.3/CRS84 columns=['geometry', 'admrichtng', 'alt_naam', 'alt_nr', 'bag_orl', 'begafstand']
+[INFO]  [04-20-2026 01:34:59] :   saving GeoPackage (EPSG:28992) -> /Users/rubenswarts/projects/postcode_search/output/aoi_provincie_only.gpkg
+[INFO]  [04-20-2026 01:34:59] :   saving plot -> /Users/rubenswarts/projects/postcode_search/output/aoi_provincie_only.png
